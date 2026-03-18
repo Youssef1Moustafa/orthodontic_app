@@ -11,35 +11,57 @@ from utils.model import OrthodonticModel
 from utils.transforms import test_transforms
 from utils.tps import warp_face_tps
 
+
 import os
 import gdown
+import streamlit as st
+import dlib
+import joblib
+import torch
 
-def download_file(file_id, output):
-    if not os.path.exists(output):
-        print(f"Downloading {output}...")
-        url = f"https://drive.google.com/uc?id={file_id}"
-        gdown.download(url, output, quiet=False)
-# -------------------------
-# Download required files
-# -------------------------
-download_file("1hhtStOe3KoYbEtW2zrNxXSZNo4YwIvz5", "orthodontic_model_v2.pth")
-download_file("1PpdGIOc6iU4WPJE-HdgPgKxtYEx1sjqx", "shape_predictor_68_face_landmarks.dat")
-# -------------------------
-# Load model
-# -------------------------
+# دالة التحميل داخل كاش عشان تضمن إنها تخلص قبل ما الكود يكمل
+@st.cache_resource
+def setup_files():
+    files = {
+        "orthodontic_model_v2.pth": "1hhtStOe3KoYbEtW2zrNxXSZNo4YwIvz5",
+        "shape_predictor_68_face_landmarks.dat": "1PpdGIOc6iU4WPJE-HdgPgKxtYEx1sjqx"
+    }
+    
+    for name, file_id in files.items():
+        if not os.path.exists(name):
+            url = f"https://drive.google.com/uc?id={file_id}"
+            gdown.download(url, name, quiet=False)
+    
+    # تحميل الـ Scaler
+    scaler = joblib.load("angle_scaler.pkl")
+    # تحميل الـ dlib models
+    detector = dlib.get_frontal_face_detector()
+    predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+    
+    return scaler, detector, predictor
+
+# تنفيذ التحميل والتحضير
+try:
+    scaler, detector, predictor = setup_files()
+except Exception as e:
+    st.error(f"Error initializing files: {e}")
+    st.stop() # يوقف البرنامج بدل ما يدي شاشة "Oh no"
+
+# تكملة كود تحميل الموديل بتاعك...
 device = torch.device("cpu")
 
 @st.cache_resource
 def load_model():
+    from utils.model import OrthodonticModel # Import inside to avoid circular issues
     model = OrthodonticModel().to(device)
-    model.load_state_dict(
-        torch.load("orthodontic_model_v2.pth", map_location=device)
-    )
+    if os.path.exists("orthodontic_model_v2.pth"):
+        model.load_state_dict(
+            torch.load("orthodontic_model_v2.pth", map_location=device)
+        )
     model.eval()
     return model
 
 model = load_model()
-scaler = joblib.load("angle_scaler.pkl")
 
 # -------------------------
 # dlib
