@@ -6,6 +6,6 @@ numpy
 Pillow
 joblib
 pandas
-dlib
 scikit-learn
 gdown
+face_recognition  # هذا سيستخدم dlib مبني مسبقاً
