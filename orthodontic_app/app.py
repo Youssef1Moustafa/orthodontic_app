@@ -11,6 +11,19 @@ from utils.model import OrthodonticModel
 from utils.transforms import test_transforms
 from utils.tps import warp_face_tps
 
+import os
+import gdown
+
+def download_file(file_id, output):
+    if not os.path.exists(output):
+        print(f"Downloading {output}...")
+        url = f"https://drive.google.com/uc?id={file_id}"
+        gdown.download(url, output, quiet=False)
+# -------------------------
+# Download required files
+# -------------------------
+download_file("1hhtStOe3KoYbEtW2zrNxXSZNo4YwIvz5", "orthodontic_model_v2.pth")
+download_file("1PpdGIOc6iU4WPJE-HdgPgKxtYEx1sjqx", "shape_predictor_68_face_landmarks.dat")
 # -------------------------
 # Load model
 # -------------------------
