@@ -1,0 +1,3 @@
+*.pth
+*.dat
+__pycache__/
